@@ -1,7 +1,3 @@
-// user: ejsejs,
-// glomex, RootDosPl0x
-// !lazor default targethost=http://lieberman.senate.gov subsite=/ speed=3 threads=20 method=tcp wait=false random=true checked=false message=www.wikileaks.org port=80 start
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
