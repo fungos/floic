@@ -1,0 +1,8 @@
+OBJECTS = \
+	src/main.o \
+	src/iflooder.o \
+	src/xxpflooder.o \
+	src/httpflooder.o \
+	src/thread.o \
+	src/runner.o \
+	src/util.o
