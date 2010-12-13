@@ -16,6 +16,9 @@ class Thread
 
 	private:
 		pthread_t tHandler;
+		
+		Thread(const Thread &);
+		Thread operator=(const Thread &);
 };
 
 #endif // __THREAD_H__

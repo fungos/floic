@@ -7,32 +7,60 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <netdb.h>
 
 HTTPFlooder::HTTPFlooder(int fid, const char *ip, int port, int delay, const char *host, const char *suburl, bool random, bool wait)
 	: IFlooder(fid, ip, port, delay)
 	, pHost(NULL)
-	, pURLChain(suburl)
+	, pURLChain(NULL)
 	, sAddress()
 	, bRandom(random)
 	, bWait(wait)
 {
-	memset(&sAddress, '\0', sizeof(sAddress));
-	sAddress.sin_family = AF_INET;
-	sAddress.sin_addr.s_addr = inet_addr(ip);
-	sAddress.sin_port = htons(port);
-
-	char *nh = const_cast<char *>(host);
-	char *p = const_cast<char *>(strstr(host, "http://"));
-	if (p)
+	if (!suburl)
 	{
-		nh = p + strlen("http://");
+		pURLChain = strdup("/");
 	}
+	else
+	{
+		pURLChain = strdup(suburl);
+	}
+	
+	if (host)
+	{	
+		if (!pIp)
+		{
+			struct hostent *he = gethostbyname(host);
+			if (he == NULL)
+				bRunning = false;
+	
+			in_addr *addr = (in_addr *)he->h_addr;
+			pIp = inet_ntoa(*addr); // don't care about the data, will not use it anymore
+		}
+		
+		memset(&sAddress, '\0', sizeof(sAddress));
+		sAddress.sin_family = AF_INET;
+		sAddress.sin_addr.s_addr = inet_addr(pIp);
+		sAddress.sin_port = htons(port);
+	
+		char *nh = const_cast<char *>(host);
+		char *p = const_cast<char *>(strstr(host, "http://"));
+		if (p)
+		{
+			nh = p + strlen("http://");
+		}
 
-	char *host2 = strdup(nh);
-	p = strstr(host2, "/");
-
-	pHost = host2;
-	pHost[p - host2] = '\0';
+		char *host2 = strdup(nh);
+		p = strstr(host2, "/");
+		
+		pHost = host2;
+		if (p)
+			pHost[p - host2] = '\0';
+	}
+	else
+	{
+		bRunning = false;
+	}
 }
 
 HTTPFlooder::~HTTPFlooder()
@@ -40,6 +68,10 @@ HTTPFlooder::~HTTPFlooder()
 	if (pHost)
 		free(pHost);
 	pHost = NULL;
+	
+	if (pURLChain)
+		free(pURLChain);
+	pURLChain = NULL;
 }
 
 bool HTTPFlooder::Run()

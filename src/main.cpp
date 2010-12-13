@@ -22,7 +22,7 @@ Runner *run = NULL;
 
 irc_session_t *session = NULL;
 int botnum = 0;
-int verbosity = 0;
+int verbosity = 1;
 int maxretry = 10;
 bool bManual = false;
 
@@ -122,7 +122,7 @@ int populate_server_list()
 		}
 		else
 		{
-			ERROR("error: config.txt:%d: invalid line.\n", i);
+			ERROR("[!] error: config.txt:%d: invalid line.\n", i);
 		}
 
 		server = strtok(NULL, ":");
@@ -170,7 +170,7 @@ void on_finish_names()
 
 	if (verbosity)
 	{
-		fprintf(stdout, "ops: %ld\n\t", opnames.size());
+		fprintf(stdout, "[+] operators: %ld\n\t", opnames.size());
 		it = opnames.begin();
 		end = opnames.end();
 
@@ -212,12 +212,12 @@ void on_command(const char *origin, const char *buffer, bool topic)
 	std::vector<std::string>::iterator it = std::find(opnames.begin(), opnames.end(), opname);
 	if (it != opnames.end() || topic)
 	{
-		LOG("accept command: %s\n", buffer);
+		LOG("[+] accept command: %s\n", buffer);
 		run->Execute(buffer);
 	}
 	else
 	{
-		ERROR("reject command: %s (from user '%s').\n", buffer, user);
+		ERROR("[!] error: reject command: %s (from user '%s').\n", buffer, user);
 	}
 
 	free(user);
@@ -251,10 +251,9 @@ void numeric_callback(irc_session_t *session, unsigned int event, const char *or
 		{
 			if (!botnum)
 			{
-				botnum = names.size();
-				INFO("bots: %d\n", botnum);
-
 				on_finish_names();
+				botnum = names.size() - opnames.size();
+				LOG("[+] bots online: %d\n", botnum);
 			}
 		}
 		break;
@@ -289,7 +288,7 @@ void generic_callback(irc_session_t *session, const char *event, const char *ori
 {
 	if (strcmp(event, "ERROR") == 0 && verbosity)
 	{
-		ERROR("error: %s\n", params[0]);
+		ERROR("[!] error: %s\n", params[0]);
 	}
 
 	if (strcmp(event, "PRIVMSG") == 0)
@@ -327,7 +326,7 @@ void connect_callback(irc_session_t *session, const char *event, const char *ori
 	// try join cli channel
 	if (irc_cmd_join(session, channel, NULL))
 	{
-		ERROR("error: %s.\n", irc_strerror(irc_errno(session)));
+		ERROR("[!] error: %s.\n", irc_strerror(irc_errno(session)));
 		INFO("info: trying other possible channels...\n");
 
 		channel = valid_servers[cur_server].channel;
@@ -336,7 +335,7 @@ void connect_callback(irc_session_t *session, const char *event, const char *ori
 			bool ok = false;
 			for (int i = 0; valid_channel[i] != NULL; i++)
 			{
-				LOG("info: trying channel '%s'.\n", valid_channel[i]);
+				LOG("[+] trying channel '%s'.\n", valid_channel[i]);
 
 				channel = valid_channel[i];
 				if (irc_cmd_join(session, channel, NULL))
@@ -347,7 +346,7 @@ void connect_callback(irc_session_t *session, const char *event, const char *ori
 
 			if (!ok)
 			{
-				ERROR("error: could not join channel - disconnecting.\n");
+				ERROR("[!] error: could not join channel - disconnecting.\n");
 
 				irc_disconnect(session);
 				//irc_destroy_session(session);
@@ -356,7 +355,7 @@ void connect_callback(irc_session_t *session, const char *event, const char *ori
 		}
 	}
 
-	INFO("joined channel %s.\n", channel);
+	LOG("[+] joined channel %s.\n", channel);
 
 	collect_names();
 	generic_callback(session, event, origin, params, count);
@@ -372,7 +371,7 @@ void hivemind()
 	memcpy(name, "LOIC_", strlen("LOIC_"));
 	name[sizeof(name)] = '\0';
 
-	LOG("using username: %s\n", name);
+	LOG("[+] using username: %s\n", name);
 
 	int error = 0, retry = 0;
 	unsigned int low = 0, high = 0;
@@ -409,11 +408,11 @@ void hivemind()
 	callbacks.event_dcc_send_req = &dcc_send_req_callback;
 
 	session = irc_create_session(&callbacks);
-	while (retry < maxretry)
+	while (1) //(retry < maxretry)
 	{
 		if ((error = irc_connect(session, server, port, "", name, "IRCLOIC", "floic v1.0")))
 		{
-			ERROR("error: connecting to '%s:%d/%s' -> %s.\n", server, port, channel, irc_strerror(irc_errno(session)));
+			ERROR("[!] error: connecting to '%s:%d/%s' -> %s.\n", server, port, channel, irc_strerror(irc_errno(session)));
 			cur_server++;
 			if (!valid_servers[cur_server].server)
 				cur_server = 0;
@@ -425,20 +424,25 @@ void hivemind()
 			irc_destroy_session(session);
 			session = irc_create_session(&callbacks);
 
-			LOG("switching to the next server '%s:%d/%s'... wait!\n", server, port, channel);
+			LOG("[+] switching to the next server '%s:%d/%s'... wait!\n", server, port, channel);
 			sleep(1);
 			continue;
 		}
 
 		while (!irc_is_connected(session));
 
-		INFO("connected.\n");
+		LOG("[+] connected (try %d).\n", retry);
 
 		irc_run(session);
+		
+		if (retry)
+		{
+			LOG("[+] disconnected from server, waiting 5sec to continue...\n");
+			sleep(5);
+		}
+		
 		retry++;
 	}
-
-	INFO("max retries.\n");
 
 	irc_destroy_session(session);
 }
@@ -524,7 +528,7 @@ int main(int argc, char **argv)
 
 	if (!populate_server_list())
 	{
-		ERROR("error: config.txt not found or invalid.\n");
+		ERROR("[!] error: config.txt not found or invalid.\n");
 		return EXIT_FAILURE;
 	}
 

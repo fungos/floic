@@ -80,6 +80,8 @@ void Runner::Stop()
 		arThreads = NULL;
 		iThreads = 0;
 	}
+	
+	LOG("[+] cannon stopped, waiting commands...\n");
 }
 
 void Runner::Execute(const char *command)
@@ -198,12 +200,12 @@ void Runner::Execute(const char *command)
 	{
 		this->Stop();
 
-		LOG("info: starting flood type %s.\n", pMethod);
+		LOG("[+] starting flood type %s.\n", pMethod ? pMethod : "tcp");
 
 		arThreads = (IFlooder **)malloc(sizeof(IFlooder *) * iThreads);
 		for (int i = 0; i < iThreads; i++)
 		{
-			if (stricmp(pMethod, "tcp") == 0 || !pMethod)
+			if (!pMethod || stricmp(pMethod, "tcp") == 0)
 			{
 				arThreads[i] = new XXPFlooder(i, pIp, iPort, iSpeed, pHost, 0, pMessage, bRandom);
 			}

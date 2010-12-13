@@ -16,7 +16,7 @@ class HTTPFlooder : public IFlooder
 
 	private:
 		char *pHost;
-		const char *pURLChain;
+		char *pURLChain;
 
 		struct sockaddr_in sAddress;
 
