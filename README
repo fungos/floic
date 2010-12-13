@@ -51,11 +51,12 @@ dependency
 libircclient
 libpthreads
 
-both are common and your distro (should) have it.
+both are common and your distro (should) have it. just run make.
 
 windows
 
-I will try to build for windows soon, but for now, any volunteers?
+use cygwin to compile, download libircclient from sourceforge. fix any paths to
+the libircclient if needed. should build on cygwin without any issue.
 
 macosx
 
