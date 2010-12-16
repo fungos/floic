@@ -103,10 +103,9 @@ void Runner::Execute(const char *command)
 
 	vector<string>::iterator it = tokens.begin();
 	vector<string>::iterator end = tokens.end();
-	it++;
 
 	bool start = false;
-	for (; it != end; it++)
+	for (++it; it != end; ++it)
 	{
 		const char *parm = (*it).c_str();
 

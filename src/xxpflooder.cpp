@@ -25,13 +25,17 @@ XXPFlooder::XXPFlooder(int fid, const char *ip, int port, int delay, const char 
 	if (!pIp)
 	{
 		struct hostent *he = gethostbyname(host);
-		if (he == NULL)
+		if (he)
+		{
+			in_addr *addr = (in_addr *)he->h_addr;
+			pIp = inet_ntoa(*addr); // don't care about the data, will not use it anymore
+		}
+		else
 			bRunning = false;
-
-		in_addr *addr = (in_addr *)he->h_addr;
-		pIp = inet_ntoa(*addr); // don't care about the data, will not use it anymore
 	}
-	sAddress.sin_addr.s_addr = inet_addr(pIp);
+
+	if (bRunning)
+		sAddress.sin_addr.s_addr = inet_addr(pIp);
 }
 
 XXPFlooder::~XXPFlooder()
@@ -49,7 +53,7 @@ bool XXPFlooder::Run()
 			{
 				pRandomData[i] = get_random_valid_char();
 			}
-			pRandomData[XXP_RANDOM_DATA_SIZE_MAX] = '\0';
+			pRandomData[XXP_RANDOM_DATA_SIZE_MAX - 1] = '\0';
 
 			pData = pRandomData;
 		}

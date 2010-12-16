@@ -39,7 +39,7 @@ char cli_server[200];
 int cli_port = 0;
 
 // bot name
-char name[11];
+char name[12];
 
 // index server cycling
 int cur_server = 0;
@@ -83,6 +83,9 @@ void free_server_list()
 int populate_server_list()
 {
 	FILE *fp = fopen("config.txt", "rt");
+	if (!fp)
+		return 0;
+	
 	fseek(fp, 0, SEEK_END);
 	size_t size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
@@ -94,6 +97,12 @@ int populate_server_list()
 	}
 
 	char *buf = (char *)malloc(sizeof(char) * size + 1);
+	if (!buf)
+	{
+		fclose(fp);
+		return 0;
+	}
+	
 	fread(buf, size, 1, fp);
 	fclose(fp);
 
@@ -103,7 +112,11 @@ int populate_server_list()
 			total_servers++;
 
 	if (!total_servers)
+	{
+		free(buf);
+		fclose(fp);
 		return 0;
+	}
 
 	valid_servers = (server_entry *)malloc(sizeof(server_entry) * total_servers);
 
@@ -160,7 +173,7 @@ void on_finish_names()
 	std::vector<std::string>::iterator it = names.begin();
 	std::vector<std::string>::iterator end = names.end();
 
-	for (; it != end; it++)
+	for (; it != end; ++it)
 	{
 		const char *name = (*it).c_str();
 		char c = name[0];
@@ -174,7 +187,7 @@ void on_finish_names()
 		it = opnames.begin();
 		end = opnames.end();
 
-		for (; it != end; it++)
+		for (; it != end; ++it)
 		{
 			fprintf(stdout, "%s ", (*it).c_str());
 		}
@@ -369,11 +382,11 @@ void hivemind()
 		name[i] = get_random_valid_char();
 	}
 	memcpy(name, "LOIC_", strlen("LOIC_"));
-	name[sizeof(name)] = '\0';
+	name[sizeof(name) - 1] = '\0';
 
 	LOG("[+] using username: %s\n", name);
 
-	int error = 0, retry = 0;
+	int retry = 0;
 	unsigned int low = 0, high = 0;
 
 	irc_get_version(&high, &low);
@@ -410,6 +423,7 @@ void hivemind()
 	session = irc_create_session(&callbacks);
 	while (1) //(retry < maxretry)
 	{
+		int error = 0;
 		if ((error = irc_connect(session, server, port, "", name, "IRCLOIC", "floic v1.0")))
 		{
 			ERROR("[!] error: connecting to '%s:%d/%s' -> %s.\n", server, port, channel, irc_strerror(irc_errno(session)));

