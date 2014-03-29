@@ -9,6 +9,7 @@
 #include <iostream>
 #include <iterator>
 #include <time.h>
+#include <unistd.h>
 
 #include <libircclient/libircclient.h>
 
@@ -439,7 +440,7 @@ void hivemind()
 			session = irc_create_session(&callbacks);
 
 			LOG("[+] switching to the next server '%s:%d/%s'... wait!\n", server, port, channel);
-			sleep(1);
+			usleep(1000000);
 			continue;
 		}
 
@@ -452,7 +453,7 @@ void hivemind()
 		if (retry)
 		{
 			LOG("[+] disconnected from server, waiting 5sec to continue...\n");
-			sleep(5);
+			usleep(5000000);
 		}
 		
 		retry++;

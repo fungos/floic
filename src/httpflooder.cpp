@@ -114,7 +114,7 @@ bool HTTPFlooder::Run()
 
 			//fprintf(stdout, "%d receiving\n", iId);
 			if (bWait)
-				recv(sock, response, 64, NULL);
+				recv(sock, response, 64, 0);
 
 			//fprintf(stdout, "[%d] %d|%d {%s} (%s)\n", iId, iCount, iError, request, response);
 			usleep(iDelay * 1000);
