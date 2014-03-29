@@ -1,6 +1,7 @@
+# validate file on http://lint.travis-ci.org/
 language: cpp
 compiler:
- - gcc
- - clang
+  - gcc
+  - clang
 script: make
 before_install: sudo apt-get install libircclient-dev
